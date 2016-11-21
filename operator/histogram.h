@@ -34,11 +34,11 @@ void equalize_histogram(cv::Mat& img, int* histogram)
 		for (int j = 0; j < img.cols; j++)
 		{
 			unsigned char& pixel = img.at<unsigned char>(i, j);
-			float difference = cdf(histogram, pixel) - *min;
+			float difference = static_cast<float>(cdf(histogram, pixel) - *min);
 			difference /= (img.rows * img.cols) - *min;
 			difference *= 255;
 
-			pixel = std::round(difference);
+			pixel = static_cast<unsigned char>(std::round(difference));
 		}
 	}
 }

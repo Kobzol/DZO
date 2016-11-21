@@ -7,6 +7,17 @@
 #include "operator/fft.h"
 #include "operator/distortion.h"
 #include "operator/histogram.h"
+#include "operator/transformation.h"
+
+typedef double pixel_t;
+typedef unsigned int uint;
+
+void save(const cv::Mat& img, float scale = 1.0f)
+{
+	cv::Mat saved;
+	img.convertTo(saved, CV_8UC3, scale);
+	cv::imwrite("image.jpg", saved);
+}
 
 cv::Mat genCircle(float radius)
 {
@@ -42,6 +53,9 @@ void sinusGen()
 		}
 	}
 }
+
+static cv::Mat img, result;
+static int k1Scaler = 0, k2Scaler = 0;
 
 void cviko1()
 {
@@ -93,31 +107,27 @@ void cviko7()
 }
 void cviko8()
 {
-	/*img = cv::imread("images/distorted_window.jpg", CV_LOAD_IMAGE_COLOR), result;
+	img = cv::imread("images/distorted_window.jpg", CV_LOAD_IMAGE_COLOR), result;
 	img.copyTo(result);
 
 	cv::imshow("Original", img);
 	cv::imshow("Undistorted", result);
 
 	cv::createTrackbar("K1", "Undistorted", &k1Scaler, 1000, [](int pos, void* data) {
-		undistort(img, result, k1Scaler, k2Scaler);
+		undistort(img, result, k1Scaler / 100.0f, k2Scaler / 100.0f);
 		cv::imshow("Original", img);
 		cv::imshow("Undistorted", result);
 	});
 	cv::createTrackbar("K2", "Undistorted", &k2Scaler, 1000, [](int pos, void* data) {
-		undistort(img, result, k1Scaler, k2Scaler);
+		undistort(img, result, k1Scaler / 100.0f, k2Scaler / 100.0f);
 		cv::imshow("Original", img);
 		cv::imshow("Undistorted", result);
 	});
 
 	while (true)
-		cv::waitKey(0);*/
+		cv::waitKey(0);
 }
-
-typedef double pixel_t;
-typedef unsigned int uint;
-
-int main(int argc, char* argv[])
+void cviko9()
 {
 	cv::Mat img = cv::imread("images/uneq.jpg", cv::ImreadModes::IMREAD_GRAYSCALE);
 
@@ -127,7 +137,106 @@ int main(int argc, char* argv[])
 	get_histogram(img, histogram);
 	equalize_histogram(img, histogram);
 
+	int max = histogram[0];
+	int min = histogram[0];
+	for (int i = 1; i < 256; i++)
+	{
+		if (histogram[i] > max)
+		{
+			max = histogram[i];
+		}
+		if (histogram[i] < min)
+		{
+			min = histogram[i];
+		}
+	}
+
+	cv::Mat histogramImg(256, 256, CV_32FC1);
+	for (int i = 0; i < histogramImg.cols; i++)
+	{
+		float height = static_cast<float>(histogram[i] - min);
+		height /= (max - min);
+
+		if (height < 0.0f) height = 0.0f;
+
+		for (int j = 0; j < histogramImg.rows; j++)
+		{
+			if (j < height * histogramImg.rows)
+			{
+				histogramImg.at<float>(histogramImg.rows - j - 1, i) = 1.0f;
+			}
+			else histogramImg.at<float>(histogramImg.rows - j - 1, i) = 0.0f;
+		}
+	}
+
+	int minCdf = cdf(histogram, 0);
+	int maxCdf = minCdf;
+
+	for (int i = 1; i < 256; i++)
+	{
+		int cdfValue = cdf(histogram, i);
+		if (cdfValue > maxCdf)
+		{
+			maxCdf = cdfValue;
+		}
+		if (cdfValue < minCdf)
+		{
+			minCdf = cdfValue;
+		}
+	}
+
+	cv::Mat cdfImg(256, 256, CV_32FC1);
+	for (int i = 0; i < cdfImg.rows; i++)
+	{
+		float height = static_cast<float>(cdf(histogram, i) - minCdf);
+		height /= (maxCdf - minCdf);
+
+		if (height < 0.0f) height = 0.0f;
+
+		for (int j = 0; j < cdfImg.rows; j++)
+		{
+			if (j < height * cdfImg.rows)
+			{
+				cdfImg.at<float>(cdfImg.rows - j - 1, i) = 1.0f;
+			}
+			else cdfImg.at<float>(cdfImg.rows - j - 1, i) = 0.0f;
+		}
+	}
+
+	cv::imshow("Histogram", histogramImg);
+	cv::imshow("CDF", cdfImg);
+
 	cv::imshow("Equalized", img);
+	cv::waitKey(0);
+}
+
+int main(int argc, char* argv[])
+{
+	cv::Mat vsb = cv::imread("images/vsb.jpg", cv::IMREAD_ANYCOLOR);
+	cv::Mat flag = cv::imread("images/martin.jpg", cv::IMREAD_ANYCOLOR);
+
+	cv::Mat transformation = cv::Mat::eye(3, 3, CV_64FC1);
+
+	float h = (float) flag.rows;
+	float w = (float) flag.cols;
+
+	float h_left_offset = 188;
+	float w_right_offset = 167;
+
+	cv::Point2f points[4] = {
+		{ 0, 0 },
+		{ h - h_left_offset, -5 },
+		{ h - h_left_offset - 12.0f, (w - w_right_offset) + 2 },
+		{ -30.0f, w - w_right_offset }
+	};
+
+	perspective(transformation, flag.rows, flag.cols, points);
+	translate(transformation, 106.0f, 70.0f);
+
+	transform<cv::Vec3b>(vsb, flag, transformation);
+
+	cv::imshow("Transformed", vsb);
+	save(vsb);
 	cv::waitKey(0);
 
 	return 0;
