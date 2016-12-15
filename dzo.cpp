@@ -8,6 +8,7 @@
 #include "operator/distortion.h"
 #include "operator/histogram.h"
 #include "operator/transformation.h"
+#include "operator/enhancement.h"
 
 typedef double pixel_t;
 typedef unsigned int uint;
@@ -209,16 +210,15 @@ void cviko9()
 	cv::imshow("Equalized", img);
 	cv::waitKey(0);
 }
-
-int main(int argc, char* argv[])
+void cviko10()
 {
 	cv::Mat vsb = cv::imread("images/vsb.jpg", cv::IMREAD_ANYCOLOR);
-	cv::Mat flag = cv::imread("images/martin.jpg", cv::IMREAD_ANYCOLOR);
+	cv::Mat flag = cv::imread("images/flag.png", cv::IMREAD_ANYCOLOR);
 
 	cv::Mat transformation = cv::Mat::eye(3, 3, CV_64FC1);
 
-	float h = (float) flag.rows;
-	float w = (float) flag.cols;
+	float h = (float)flag.rows;
+	float w = (float)flag.cols;
 
 	float h_left_offset = 188;
 	float w_right_offset = 167;
@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
 		{ -30.0f, w - w_right_offset }
 	};
 
-	perspective(transformation, flag.rows, flag.cols, points);
+	perspectiveManual(transformation, flag.rows, flag.cols, points);
 	translate(transformation, 106.0f, 70.0f);
 
 	transform<cv::Vec3b>(vsb, flag, transformation);
@@ -238,7 +238,103 @@ int main(int argc, char* argv[])
 	cv::imshow("Transformed", vsb);
 	save(vsb);
 	cv::waitKey(0);
+}
+
+std::vector<float> trace(cv::Mat& img)
+{
+	std::vector<float> column(img.rows, 0.0f);
+
+	for (int i = 0; i < img.rows; i++)
+	{
+		float rowValue = 0.0f;
+		for (int j = 0; j < img.cols; j++)
+		{
+			rowValue += img.at<float>(i, j);
+		}
+
+		column[i] = rowValue / img.cols;
+	}
+
+	return column;
+}
+void setFromColumn(cv::Mat& img, std::vector<float>& column)
+{
+	for (int i = 0; i < img.rows; i++)
+	{
+		for (int j = 0; j < img.cols; j++)
+		{
+			img.at<float>(i, j) = column[i];
+		}
+	}
+}
+void addToResult(cv::Mat& inputImg, cv::Mat& resultImg)
+{
+	for (int i = 0; i < resultImg.rows; i++)
+	{
+		for (int j = 0; j < resultImg.cols; j++)
+		{
+			resultImg.at<float>(i, j) += inputImg.at<float>(i, j) / 360.0;
+		}
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	cviko10();
+	return 0;
+
+	cv::Mat img = cv::imread("images/test02.png", CV_LOAD_IMAGE_GRAYSCALE);
+	cv::Mat flImg(img.rows, img.cols, CV_32FC1), rotatedImg(img.rows, img.cols, CV_32FC1), resultImg(img.rows, img.cols, CV_32FC1), testImg(img.rows, img.cols, CV_32FC1);
+	img.convertTo(flImg, CV_32FC1, 1.0 / 255.0);
+
+	for (int i = 0; i < resultImg.rows; i++)
+	{
+		for (int j = 0; j < resultImg.cols; j++)
+		{
+			resultImg.at<float>(i, j) = 0.0;
+		}
+	}
+
+	std::vector<float> projections[360];
+	cv::Point2f center(flImg.rows / 2.0f, flImg.cols / 2.0f);
+
+	for (int i = 0; i < 360; i++)
+	{
+		cv::Mat r = cv::getRotationMatrix2D(center, i, 1.0);
+		cv::warpAffine(flImg, rotatedImg, r, flImg.size());
+
+		cv::imshow("Rotated", rotatedImg);
+		cv::waitKey(10);
+
+		projections[i] = trace(rotatedImg);
+	}
+
+	for (int i = 0; i < 360; i++)
+	{
+		setFromColumn(testImg, projections[i]);
+
+		cv::Mat r = cv::getRotationMatrix2D(center, 359 - i, 1.0);
+		cv::warpAffine(testImg, rotatedImg, r, testImg.size());
+
+		cv::imshow("Rotated", rotatedImg);
+		cv::waitKey(10);
+
+		addToResult(rotatedImg, resultImg);
+	}
+
+	double min, max;
+	cv::minMaxIdx(resultImg, &min, &max);
+
+	for (int i = 0; i < resultImg.rows; i++)
+	{
+		for (int j = 0; j < resultImg.cols; j++)
+		{
+			resultImg.at<float>(i, j) = simple_contrast_enhancement<float>(resultImg.at<float>(i, j), min, max);
+		}
+	}
+
+	cv::imshow("Test", resultImg);
+	cv::waitKey(0);
 
 	return 0;
 }
-

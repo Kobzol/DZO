@@ -49,6 +49,59 @@ void perspective(cv::Mat& transformation, int height, int width, cv::Point2f poi
 	cv::Mat pers = cv::getPerspectiveTransform(points, from);
 	transformation = transformation * pers;
 }
+void perspectiveManual(cv::Mat& transformation, int height, int width, cv::Point2f points[4])
+{
+	cv::Point2f from[4] = {
+		cv::Point2f(0.0f, 0.0f),
+		cv::Point2f((float)height, 0.0f),
+		cv::Point2f((float)height, (float)width),
+		cv::Point2f(0.0f, (float)width)
+	};
+
+	cv::Mat solutionVector;
+	cv::Mat matA(8, 8, CV_64FC1), matB(8, 1, CV_64FC1);
+
+	for (int i = 0; i < 4; i++)
+	{
+		int startRow = i * 2;
+
+		// first row
+		matA.at<double>(startRow * 8) = points[i].y;
+		matA.at<double>(startRow * 8 + 1) = 1;
+		matA.at<double>(startRow * 8 + 2) = 0;
+		matA.at<double>(startRow * 8 + 3) = 0;
+		matA.at<double>(startRow * 8 + 4) = 0;
+		matA.at<double>(startRow * 8 + 5) = -from[i].x * points[i].x;
+		matA.at<double>(startRow * 8 + 6) = -from[i].x * points[i].y;
+		matA.at<double>(startRow * 8 + 7) = -from[i].x;
+		matB.at<double>(startRow) = -points[i].x;
+
+		startRow++;
+
+		// second row
+		matA.at<double>(startRow * 8) = 0;
+		matA.at<double>(startRow * 8 + 1) = 0;
+		matA.at<double>(startRow * 8 + 2) = points[i].x;
+		matA.at<double>(startRow * 8 + 3) = points[i].y;
+		matA.at<double>(startRow * 8 + 4) = 1;
+		matA.at<double>(startRow * 8 + 5) = -from[i].y * points[i].x;
+		matA.at<double>(startRow * 8 + 6) = -from[i].y * points[i].y;
+		matA.at<double>(startRow * 8 + 7) = -from[i].y;
+		matB.at<double>(startRow) = 0;
+	}
+
+	int ret = cv::solve(matA, matB, solutionVector);
+
+	cv::Mat perspectiveMatrix(3, 3, CV_64FC1);
+	perspectiveMatrix.at<double>(0, 0) = 1.0f;
+
+	for (int i = 1; i < 9; i++)
+	{
+		perspectiveMatrix.at<double>(i) = solutionVector.at<double>(i - 1);
+	}
+
+	transformation = transformation * perspectiveMatrix;
+}
 
 cv::Vec2d transformPos(const cv::Vec2d& position, const cv::Mat& transformation)
 {
