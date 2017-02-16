@@ -2,13 +2,13 @@
 
 #include "stdafx.h"
 
-#include "operator/convolution.h"
-#include "operator/anisotropic.h"
-#include "operator/fft.h"
-#include "operator/distortion.h"
-#include "operator/histogram.h"
-#include "operator/transformation.h"
-#include "operator/enhancement.h"
+#include "dzo/convolution.h"
+#include "dzo/anisotropic.h"
+#include "dzo/fft.h"
+#include "dzo/distortion.h"
+#include "dzo/histogram.h"
+#include "dzo/transformation.h"
+#include "dzo/enhancement.h"
 
 typedef double pixel_t;
 typedef unsigned int uint;
@@ -278,11 +278,8 @@ void addToResult(cv::Mat& inputImg, cv::Mat& resultImg)
 	}
 }
 
-int main(int argc, char* argv[])
+int _main(int argc, char* argv[])
 {
-	cviko10();
-	return 0;
-
 	cv::Mat img = cv::imread("images/test02.png", CV_LOAD_IMAGE_GRAYSCALE);
 	cv::Mat flImg(img.rows, img.cols, CV_32FC1), rotatedImg(img.rows, img.cols, CV_32FC1), resultImg(img.rows, img.cols, CV_32FC1), testImg(img.rows, img.cols, CV_32FC1);
 	img.convertTo(flImg, CV_32FC1, 1.0 / 255.0);
