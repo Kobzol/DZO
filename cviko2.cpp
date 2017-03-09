@@ -118,7 +118,7 @@ static void laplaceThreshold(cv::Mat& img, cv::Mat& result, int low, int high)
 	{
 		for (int x = 1; x < img.cols - 1; x++)
 		{
-			float angle = gradient.at<cv::Vec2f>(y, x).val[0];
+			float angle = gradient.at<cv::Vec2f>(y, x).val[0] + M_PI_2;
 			float gradValue = gradient.at<cv::Vec2f>(y, x).val[1];
 			float e_plus = 0.0f, e_minus = 0.0f;
 
@@ -163,31 +163,29 @@ static void laplaceThreshold(cv::Mat& img, cv::Mat& result, int low, int high)
 			crossFillEdges(result, gradient, y, x, lowValue, highValue);
 		}
 	}
-
-	cv::imshow("Crossfill", result);
 }
 static void double_thresholding()
 {
 	static cv::Mat img = cv::imread("images/valve.png", CV_LOAD_IMAGE_GRAYSCALE);
 	img.convertTo(img, CV_32FC1, 1 / 255.0);
-	cv::imshow("Thresholding", img);
+	cv::imshow("Crossfill", img);
 
-	static int lowThreshold = 1, highThreshold = 50;
+	static int lowThreshold = 6, highThreshold = 7;
 	static cv::Mat laplace = img.clone();
 
-	cv::createTrackbar("Low threshold", "Thresholding", &lowThreshold, 100, [](int pos, void* threshold) {
+	cv::createTrackbar("Low threshold", "Crossfill", &lowThreshold, 100, [](int pos, void* threshold) {
 		*((int*)threshold) = pos;
 		laplaceThreshold(img, laplace, lowThreshold, highThreshold);
-		cv::imshow("Thresholding", laplace);
+		cv::imshow("Crossfill", laplace);
 	}, &lowThreshold);
-	cv::createTrackbar("High threshold", "Thresholding", &highThreshold, 100, [](int pos, void* threshold) {
+	cv::createTrackbar("High threshold", "Crossfill", &highThreshold, 100, [](int pos, void* threshold) {
 		*((int*)threshold) = pos;
 		laplaceThreshold(img, laplace, lowThreshold, highThreshold);
-		cv::imshow("Thresholding", laplace);
+		cv::imshow("Crossfill", laplace);
 	}, &highThreshold);
 
 	laplaceThreshold(img, laplace, lowThreshold, highThreshold);
-	cv::imshow("Thresholding", laplace);
+	cv::imshow("Crossfill", laplace);
 }
 
 void cviko2()
