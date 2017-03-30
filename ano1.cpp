@@ -128,10 +128,13 @@ static void laplace()
 void cviko2();
 void cviko3();
 void cviko4();
+void cviko5();
+void cviko6();
+void cviko7();
 
 int main(int argc, char* argv[])
 {
-	cviko4();
+	cviko7();
 
 	cv::waitKey(0);
 

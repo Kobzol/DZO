@@ -4,13 +4,6 @@
 #include <ostream>
 #include <opencv2/opencv.hpp>
 
-#define THRESHOLD_MARK (128)
-
-struct Object
-{
-	std::vector<cv::Point> points;
-};
-
 class Feature
 {
 public:
@@ -23,13 +16,19 @@ public:
 
 	}
 
-	double distance(Feature& feature)
+	double distance(const Feature& feature)
 	{
 		return std::pow(feature.f1 - this->f1, 2) + std::pow(feature.f2 - this->f2, 2);
 	}
 
 	double f1 = 0.0;
 	double f2 = 0.0;
+};
+
+struct Object
+{
+	std::vector<cv::Point> points;
+	Feature feature;
 };
 
 std::ostream& operator<<(std::ostream& os, Feature& feature);
@@ -44,3 +43,5 @@ std::vector<cv::Point> getPerimeter(cv::Mat& img, Object& object);
 
 double moment(int p, int q, Object& object);
 double momentMinMax(Object& object);
+
+std::vector<Object> getObjects(cv::Mat img, int thresholdLimit);

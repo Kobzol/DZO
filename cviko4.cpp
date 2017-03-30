@@ -6,7 +6,7 @@
 #define THRESHOLD_LIMIT (128)
 #define AREA_SCALE (100)
 
-std::vector<Feature> getSampleObjects()
+static std::vector<Feature> getSampleObjects()
 {
 	cv::Mat img = cv::imread("images/train.png", cv::IMREAD_GRAYSCALE);
 	cv::Mat mask = img.clone();
@@ -64,7 +64,7 @@ std::vector<Feature> getSampleObjects()
 
 	return features;
 }
-std::vector<std::pair<Object, Feature>> getObjects(std::string path, cv::Mat& colored)
+static std::vector<std::pair<Object, Feature>> getObjects(std::string path, cv::Mat& colored)
 {
 	cv::Mat img = cv::imread(path, cv::IMREAD_GRAYSCALE);
 	cv::Mat mask = img.clone();

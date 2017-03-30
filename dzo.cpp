@@ -58,7 +58,7 @@ void sinusGen()
 static cv::Mat img, result;
 static int k1Scaler = 0, k2Scaler = 0;
 
-void cviko1()
+static void cviko1()
 {
 	/*cv::cvtColor(src_8uc3_img, src_8uc1_img, cv::ColorConversionCodes::COLOR_BGR2GRAY);
 	src_8uc1_img.convertTo(src_32fc1_img, CV_32FC1, 1.0f / 255.0f);	// škálovací faktor
@@ -74,7 +74,7 @@ void cviko1()
 	}
 	}*/
 }
-void cviko7()
+static void cviko7()
 {
 	cv::Mat img = cv::imread("images/lena64_bars.png", CV_LOAD_IMAGE_GRAYSCALE), moon;
 	cv::imshow("Orig", img);
@@ -106,7 +106,7 @@ void cviko7()
 	cv::imshow("Restored", restored);
 	cv::moveWindow("Restored", 250, 250);
 }
-void cviko8()
+static void cviko8()
 {
 	img = cv::imread("images/distorted_window.jpg", CV_LOAD_IMAGE_COLOR), result;
 	img.copyTo(result);
@@ -128,7 +128,7 @@ void cviko8()
 	while (true)
 		cv::waitKey(0);
 }
-void cviko9()
+static void cviko9()
 {
 	cv::Mat img = cv::imread("images/uneq.jpg", cv::ImreadModes::IMREAD_GRAYSCALE);
 
@@ -210,7 +210,7 @@ void cviko9()
 	cv::imshow("Equalized", img);
 	cv::waitKey(0);
 }
-void cviko10()
+static void cviko10()
 {
 	cv::Mat vsb = cv::imread("images/vsb.jpg", cv::IMREAD_ANYCOLOR);
 	cv::Mat flag = cv::imread("images/flag.png", cv::IMREAD_ANYCOLOR);

@@ -2,6 +2,9 @@
 #include "segmentation.h"
 
 #include <queue>
+#include <ctime>
+
+#define THRESHOLD_MARK (128)
 
 std::ostream& operator<<(std::ostream& os, Feature& feature)
 {
@@ -161,4 +164,28 @@ double momentMinMax(Object& object)
 	double umax = 0.5 * (mom2_0 + mom0_2) + 0.5 * std::sqrt(4 * (mom1_1 * mom1_1) + std::pow((mom2_0 - mom0_2), 2));
 
 	return umin / umax;
+}
+
+std::vector<Object> getObjects(cv::Mat img, int thresholdLimit)
+{
+	cv::Mat mask = img.clone();
+
+	threshold(img, mask, thresholdLimit);
+
+	cv::Mat thresholded = mask.clone();
+	std::vector<Object> objects = index(mask);
+
+	for (Object& obj : objects)
+	{
+		cv::Point center = centerOfMass(obj);
+		int area = getArea(obj);
+		std::vector<cv::Point> perimeter = getPerimeter(thresholded, obj);
+
+		double f1 = (perimeter.size() * perimeter.size()) / (double)(100 * area);
+		double f2 = momentMinMax(obj);
+
+		obj.feature = Feature(f1, f2);
+	}
+
+	return objects;
 }
